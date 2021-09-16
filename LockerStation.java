@@ -1,4 +1,4 @@
-// package objectOrientedDesign;
+package AdvancedOOD;
 
 import java.util.HashMap;
 
@@ -33,75 +33,73 @@ import java.util.List;
  
 public class LockerStation {
     private final String id;
-    private static final int EACH_CAPACITY = 5; // In one station, each type of lockers has five lockers
-    public List<Locker> lockers;
-    private int count;
-    // List<Locker> envLockers;
-    // List<Locker> stdLockers;
-    // List<Locker> cLockers;
-    // HashMap<PkgType, List<Locker>> lockers;
+    // private static final int EACH_CAPACITY = 5; // In one station, each type of lockers has five lockers
+    // public List<Locker> lockers;
+    // private int count;
+    List<Locker> envLockers;
+    List<Locker> stdLockers;
+    List<Locker> cLockers;
+    int capacity;
+    HashMap<PkgType, List<Locker>> lockers;
     
-    public LockerStation(String id) {
-    // public LockerStation(String id, int envelopeNum, int standardNum, int coolerNum) {
+    // public LockerStation(String id) {
+    public LockerStation(String id, int envelopeNum, int standardNum, int coolerNum) {
         this.id = id;
-        lockers = new ArrayList<>();
-        count = 0;
-        for (int i = 0; i < EACH_CAPACITY; i++) {
-            lockers.add(new Envelope("E " + i));
-            count++;
-        }
-        for (int i = 0; i < EACH_CAPACITY; i++) {
-            lockers.add(new Standard("S " + i));
-            count++;
-        }
-        for (int i = 0; i < EACH_CAPACITY; i++) {
-            lockers.add(new Cooler("C " + i));
-            count++;
-        }
-        // this.lockers = new HashMap<PkgType, List<Locker>>();
-        // List<Locker> envLockers = new ArrayList<>();
-        // for (int i = 0; i < envelopeNum; i++) {
-        //     envLockers.add(new Envelope(String.valueOf(i) + " E"));
-        //     capacity++;
+        // lockers = new ArrayList<>();
+        // count = 0;
+        // for (int i = 0; i < EACH_CAPACITY; i++) {
+        //     lockers.add(new Envelope("E " + i));
+        //     count++;
         // }
-        // this.lockers.put(PkgType.SMALL, envLockers);
+        // for (int i = 0; i < EACH_CAPACITY; i++) {
+        //     lockers.add(new Standard("S " + i));
+        //     count++;
+        // }
+        // for (int i = 0; i < EACH_CAPACITY; i++) {
+        //     lockers.add(new Cooler("C " + i));
+            // count++;
+        // }
+        this.lockers = new HashMap<PkgType, List<Locker>>();
+        List<Locker> envLockers = new ArrayList<>();
+        for (int i = 0; i < envelopeNum; i++) {
+            envLockers.add(new Envelope(String.valueOf(i) + " E"));
+            capacity++;
+        }
+        this.lockers.put(PkgType.SMALL, envLockers);
 
-        // List<Locker> stdLockers = new ArrayList<>();
-        // for (int i = 0; i < standardNum; i++) {
-        //     stdLockers.add(new Standard(String.valueOf(i) + " S"));
-        //     capacity++;
-        // }
-        // this.lockers.put(PkgType.STANDARD, stdLockers);
+        List<Locker> stdLockers = new ArrayList<>();
+        for (int i = 0; i < standardNum; i++) {
+            stdLockers.add(new Standard(String.valueOf(i) + " S"));
+            capacity++;
+        }
+        this.lockers.put(PkgType.STANDARD, stdLockers);
 
-        // List<Locker> cLockers = new ArrayList<>();
-        // for (int i = 0; i < coolerNum; i++) {
-        //     cLockers.add(new Cooler(String.valueOf(i) + " C"));
-        //     capacity++;
-        // }
-        // this.lockers.put(PkgType.FRESH, cLockers);
+        List<Locker> cLockers = new ArrayList<>();
+        for (int i = 0; i < coolerNum; i++) {
+            cLockers.add(new Cooler(String.valueOf(i) + " C"));
+            capacity++;
+        }
+        this.lockers.put(PkgType.FRESH, cLockers);
     }
 
     public String getAvailableLocker(UserPkg pkg) {// and deliver
-        for (Locker locker : this.lockers) {
-            if (locker.)
+    	// find the matched locker type
+        List<Locker> matchLockers = this.lockers.getOrDefault(pkg.getSize(), null); // TODO: pkg.getSize().getVal() => arraylist
+        if (matchLockers == null) {
+            throw new RuntimeException("No such type of locker");
         }
-    	// // find the matched locker type
-        // List<Locker> matchLockers = this.lockers.getOrDefault(pkg.getSize(), null); // TODO: pkg.getSize().getVal() => arraylist
-        // if (matchLockers == null) {
-        //     throw new RuntimeException("No such type of locker");
-        // }
-        // // search for the exact locker
-        // for (int i = 0; i < matchLockers.size(); i++) {
-        //     if (matchLockers.get(i).pkg == null) {
-        //         // place package into the locker
-        //         Locker locker = matchLockers.get(i);
-        //         locker.openLocker();
-        //         locker.confirmDelivery(pkg);
-        //         matchLockers.set(i, locker);
-        //         return locker.id; 
-        //     }
-        // }
-        // throw new RuntimeException("No available locker");
+        // search for the exact locker
+        for (int i = 0; i < matchLockers.size(); i++) {
+            if (matchLockers.get(i).pkg == null) {
+                // place package into the locker
+                Locker locker = matchLockers.get(i);
+                locker.openLocker();
+                locker.confirmDelivery(pkg);
+                matchLockers.set(i, locker);
+                return locker.id;
+            }
+        }
+        throw new RuntimeException("No available locker");
         //TODO: If no available matching size locker, search next bigger locker
     }
 
