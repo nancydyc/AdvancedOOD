@@ -1,7 +1,5 @@
 package AdvancedOOD;
 
-import java.util.HashMap;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,81 +19,40 @@ import java.util.List;
             openLocker()
             closeLocker()
             sendNotification()
-            releaseLocker()
-        
-    TODO:
-        May have some problems when we want to use a bigger type of locker to store a smaller package:
-        Solution: assign value to enum locker type.
-                An ArrayList is better than HashMap when we want to sort the locker types by some value.
-
+            releaseLocker()d
  */
-
  
 public class LockerStation {
     private final String id;
-    // private static final int EACH_CAPACITY = 5; // In one station, each type of lockers has five lockers
-    // public List<Locker> lockers;
-    // private int count;
-    List<Locker> envLockers;
-    List<Locker> stdLockers;
-    List<Locker> cLockers;
-    int capacity;
-    HashMap<PkgType, List<Locker>> lockers;
+    private static final int ENVELOPE_NUM = 3;
+    private static final int STANDARD_NUM = 3;
+    private static final int COOLER_NUM = 3;
+    public List<Locker> lockers;
+    private int count;
     
-    // public LockerStation(String id) {
-    public LockerStation(String id, int envelopeNum, int standardNum, int coolerNum) {
+    public LockerStation(String id) {
         this.id = id;
-        // lockers = new ArrayList<>();
-        // count = 0;
-        // for (int i = 0; i < EACH_CAPACITY; i++) {
-        //     lockers.add(new Envelope("E " + i));
-        //     count++;
-        // }
-        // for (int i = 0; i < EACH_CAPACITY; i++) {
-        //     lockers.add(new Standard("S " + i));
-        //     count++;
-        // }
-        // for (int i = 0; i < EACH_CAPACITY; i++) {
-        //     lockers.add(new Cooler("C " + i));
-            // count++;
-        // }
-        this.lockers = new HashMap<PkgType, List<Locker>>();
-        List<Locker> envLockers = new ArrayList<>();
-        for (int i = 0; i < envelopeNum; i++) {
-            envLockers.add(new Envelope(String.valueOf(i) + " E"));
-            capacity++;
+        lockers = new ArrayList<>();
+        count = 0;
+        for (int i = 0; i < ENVELOPE_NUM + STANDARD_NUM + COOLER_NUM; i++) {
+            if (i < ENVELOPE_NUM) {
+                lockers.add(new Envelope(Integer.toString(i)));
+            } else if (i < ENVELOPE_NUM + STANDARD_NUM) {
+                lockers.add(new Standard(Integer.toString(i)));
+            } else {
+                lockers.add(new Cooler(Integer.toString(i)));
+            }
+            count++;
         }
-        this.lockers.put(PkgType.SMALL, envLockers);
-
-        List<Locker> stdLockers = new ArrayList<>();
-        for (int i = 0; i < standardNum; i++) {
-            stdLockers.add(new Standard(String.valueOf(i) + " S"));
-            capacity++;
-        }
-        this.lockers.put(PkgType.STANDARD, stdLockers);
-
-        List<Locker> cLockers = new ArrayList<>();
-        for (int i = 0; i < coolerNum; i++) {
-            cLockers.add(new Cooler(String.valueOf(i) + " C"));
-            capacity++;
-        }
-        this.lockers.put(PkgType.FRESH, cLockers);
     }
 
-    public String getAvailableLocker(UserPkg pkg) {// and deliver
-    	// find the matched locker type
-        List<Locker> matchLockers = this.lockers.getOrDefault(pkg.getSize(), null); // TODO: pkg.getSize().getVal() => arraylist
-        if (matchLockers == null) {
-            throw new RuntimeException("No such type of locker");
-        }
-        // search for the exact locker
-        for (int i = 0; i < matchLockers.size(); i++) {
-            if (matchLockers.get(i).pkg == null) {
-                // place package into the locker
-                Locker locker = matchLockers.get(i);
+    // AMZ delivery person search for available locker and deliver package
+    public String getAvailableLocker(UserPkg pkg) {
+        for (Locker locker : this.lockers) {
+            if (locker.isEmpty() && locker.canFit(pkg)) {
                 locker.openLocker();
                 locker.confirmDelivery(pkg);
-                matchLockers.set(i, locker);
+                locker.closeLocker();
                 return locker.id;
             }
         }
@@ -103,24 +60,14 @@ public class LockerStation {
         //TODO: If no available matching size locker, search next bigger locker
     }
 
-    public UserPkg findPackageLocker(String lockerId) { // how to match pick up locker id with locker id
-        String lockerTypeKey = lockerId.split(" ")[1];
-//        System.out.println("Locker type is " + lockerTypeKey);
-        int num = Integer.parseInt(lockerId.split(" ")[0]);
-        PkgType locationKey = null;
-        if (lockerTypeKey.equals("E")) locationKey = PkgType.SMALL;
-        if (lockerTypeKey.equals("S")) locationKey = PkgType.STANDARD;
-        if (lockerTypeKey.equals("C")) locationKey = PkgType.FRESH;
-        
-//        System.out.println("Lockers at station" + this.id + ": " + this.lockers);
-        List<Locker> matchLockers = this.lockers.getOrDefault(locationKey, null); // what the default value should be? line 67?
-        if (matchLockers == null) {
-            throw new RuntimeException("Invalid Locker ID");
-        }
-        Locker locker = matchLockers.get(num);
+    // User come to the station to find their package
+    public UserPkg findPackageLocker(String lockerId) {
+        int idx = Integer.parseInt(lockerId);
+        Locker locker = this.lockers.get(idx);
         locker.openLocker();
+        locker.sendPickedUpNotification();
         UserPkg pack = locker.retrievePackage();
-        matchLockers.set(num, locker);
+        this.lockers.set(idx, locker);
         locker.closeLocker();
         return pack;   
     }
@@ -132,8 +79,8 @@ public class LockerStation {
         Order order1 = new Order("0", user1);
         System.out.println(order1.toString());
         
-        LockerStation station1 = new LockerStation("1", 5, 6, 7);
-        System.out.println("Station " + station1.id + " has " + station1.capacity + " lockers in total.");
+        LockerStation station1 = new LockerStation("1");
+        System.out.println("Station " + station1.id + " has " + station1.count + " lockers in total.");
         System.out.println();
         
         UserPkg pack1 = new UserPkg("0", PkgType.SMALL, order1);
@@ -144,10 +91,8 @@ public class LockerStation {
         System.out.println();
         
         if (deliveredPackId != null) {
-            UserPkg userPackage = station1.findPackageLocker(deliveredPackId);
-            System.out.println(userPackage.getOrder().toString() + ". Package: " + userPackage.getId() + " delivery completed.");	
+            station1.findPackageLocker(deliveredPackId);
         }
-
     }
 }
 
@@ -183,10 +128,12 @@ class Order {
     
     public void setDeliveredStatus() {
     	this.status = Status.DELIVERED;
+        System.out.println("Order " + this.id + " status: " + this.status);
     }
         
     public void setOnthewayStatus() {
     	this.status = Status.ON_THE_WAY;
+        System.out.println("Order " + this.id + " status: " + this.status);
     }
     
     @Override
@@ -328,12 +275,12 @@ abstract class Locker {
     public void confirmDelivery(UserPkg pkg) {
         this.pkg = pkg;
         pkg.getOrder().setDeliveredStatus();
-        System.out.println("Order is " + pkg.getOrder().status + ". Closed Locker " + id); 
+        System.out.println("Order is " + pkg.getOrder().status + " for package " + pkg.getId()); // send notification
     }
-    
+
     public UserPkg retrievePackage() {
     	UserPkg ret = this.pkg;
-    	System.out.println(pkg.getId() + " retrieved.");
+    	System.out.println("Package ID " + pkg.getId() + " retrieved.");
     	this.pkg = null;
     	return ret;
     }
@@ -341,6 +288,12 @@ abstract class Locker {
     public String closeLocker() {
     	System.out.println("Closed Locker " + this.id);
     	return this.id;
+    }
+
+    public String sendPickedUpNotification() {
+        String msg = pkg.getOrder().toString() + ". Package ID: " + pkg.getId() + " is picked up at." + new Date();
+        System.out.println(msg);
+        return msg;
     }
 }
 
